@@ -1,0 +1,6 @@
+import jwt from'jsonwebtoken';import multer from'multer';import{config}from'./config.js';import{AppError}from'./utils.js';
+export function auth(req,res,next){const token=req.headers.authorization?.replace(/^Bearer /,'');if(!token)return next(new AppError('Authentication required',401));try{req.user=jwt.verify(token,config.jwtSecret);next()}catch{next(new AppError('Invalid or expired session',401))}}
+export const permit=(...roles)=>(req,res,next)=>roles.includes(req.user.role)?next():next(new AppError('Insufficient permission',403));
+export const validate=schema=>(req,res,next)=>{const r=schema.safeParse(req.body);if(!r.success)return next(new AppError('Validation failed',422,r.error.flatten()));req.body=r.data;next()};
+export const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:8*1024*1024,files:12},fileFilter:(req,file,cb)=>cb(null,['image/jpeg','image/png','image/webp'].includes(file.mimetype))});
+export function notFound(req,res,next){next(new AppError('API route not found',404))}export function errors(err,req,res,next){const status=err.status||500;console.error(`[${new Date().toISOString()}]`,err.message);res.status(status).json({success:false,message:status===500?'An unexpected server error occurred':err.message,...(err.details?{errors:err.details}:{})})}

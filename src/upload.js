@@ -1,0 +1,3 @@
+import{cloudinary}from'./config.js';import{AppError}from'./utils.js';
+export const hasCloudinary=()=>!!(process.env.CLOUDINARY_CLOUD_NAME&&process.env.CLOUDINARY_API_KEY&&process.env.CLOUDINARY_API_SECRET);
+export async function uploadImage(file,folder='estatevista'){if(!hasCloudinary())throw new AppError('Image uploads require Cloudinary credentials. Seeded remote images remain available.',503);return new Promise((resolve,reject)=>{const s=cloudinary.uploader.upload_stream({folder,resource_type:'image'},(e,r)=>e?reject(new AppError('Image upload failed',502)):resolve({url:r.secure_url,publicId:r.public_id}));s.end(file.buffer)})}export async function destroyImage(publicId){if(publicId&&hasCloudinary())await cloudinary.uploader.destroy(publicId)}
